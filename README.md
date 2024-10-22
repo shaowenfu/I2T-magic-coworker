@@ -1,5 +1,13 @@
 # multi-modal-application-development
 项目链接：https://loving-basement-33d.notion.site/6bdba78ea04d457f80890dd7c1fb3c10?pvs=4
+
+## 需求文档分工
+task1：1 2
+task2: 3
+task3: 4 5
+task4: 6 7 8
+模仿之前发的文档写的。
+
 # 项目概述
 
 图文助手是一款基于多模态学习模型的一套完整的从客户端到服务端的**工具平台**。

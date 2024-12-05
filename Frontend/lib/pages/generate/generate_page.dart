@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/api_service.dart';
 
 class GeneratePage extends StatefulWidget {
   const GeneratePage({super.key});
@@ -22,6 +23,8 @@ class _GeneratePageState extends State<GeneratePage> {
     'Abstract',
   ];
 
+  final ApiService _apiService = ApiService();
+
   Future<void> _generateImage() async {
     if (_descriptionController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -35,10 +38,12 @@ class _GeneratePageState extends State<GeneratePage> {
     });
 
     try {
-      // TODO: 调用后端API生成图片
-      await Future.delayed(const Duration(seconds: 3)); // 模拟网络请求
+      final imagePath = await _apiService.generateImage(
+        _descriptionController.text,
+        'user_123', // TODO: 替换为实际的用户ID
+      );
       setState(() {
-        _generatedImagePath = 'assets/images/generated_sample.jpg';
+        _generatedImagePath = imagePath;
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -224,7 +229,7 @@ class _GeneratePageState extends State<GeneratePage> {
               ),
               const SizedBox(height: 24),
 
-              // ��成按钮
+              // 生成按钮
               ElevatedButton(
                 onPressed: _isGenerating ? null : _generateImage,
                 style: ElevatedButton.styleFrom(

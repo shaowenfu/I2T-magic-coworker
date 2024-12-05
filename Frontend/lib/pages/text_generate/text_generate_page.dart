@@ -1,4 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import '../../services/api_service.dart';
 
 class TextGeneratePage extends StatefulWidget {
   const TextGeneratePage({super.key});
@@ -10,13 +13,16 @@ class TextGeneratePage extends StatefulWidget {
 class _TextGeneratePageState extends State<TextGeneratePage> {
   bool _isLoading = false;
   final List<Map<String, String>> _imageCards = [];
+  final ApiService _apiService = ApiService();
+  final ImagePicker _picker = ImagePicker();
 
   Future<void> _uploadImage() async {
-    // TODO: 实现图片选择和上传
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image == null) return;
+
     setState(() {
-      // 模拟添加新的图片卡片
       _imageCards.add({
-        'imagePath': 'assets/images/sample.jpg',
+        'imagePath': image.path,
         'description': '等待生成描述...',
       });
     });
@@ -28,10 +34,12 @@ class _TextGeneratePageState extends State<TextGeneratePage> {
     });
 
     try {
-      // TODO: 调用后端API生成描述
-      await Future.delayed(const Duration(seconds: 2)); // 模拟网络请求
+      final description = await _apiService.generateText(
+        File(_imageCards[index]['imagePath']!),
+        'user_123', // TODO: 替换为实际的用户ID
+      );
       setState(() {
-        _imageCards[index]['description'] = '这是一张美丽的风景照片，展现了大自然的壮丽景色...';
+        _imageCards[index]['description'] = description;
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(

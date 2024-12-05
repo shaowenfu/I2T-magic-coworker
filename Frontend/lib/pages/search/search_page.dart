@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../services/api_service.dart';
+import '../../models/image_result.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -10,26 +12,25 @@ class SearchPage extends StatefulWidget {
 class _SearchPageState extends State<SearchPage> {
   final TextEditingController _searchController = TextEditingController();
   bool _isLoading = false;
-  List<String> _searchResults = []; // 暂时用String存储图片路径
+  final ApiService _apiService = ApiService();
+  List<ImageResult> _searchResults = [];
 
   Future<void> _performSearch(String query) async {
+    if (query.isEmpty) return;
+
     setState(() {
       _isLoading = true;
     });
 
     try {
-      // TODO: 调用后端API进行搜索
-      await Future.delayed(const Duration(seconds: 2)); // 模拟网络请求
+      final results = await _apiService.searchImages(query);
       setState(() {
-        // 模拟搜索结果
-        _searchResults = List.generate(
-          12,
-          (index) => 'assets/images/sample_$index.jpg',
-        );
+        _searchResults = results;
       });
     } catch (e) {
-      // TODO: 错误处理
-      debugPrint(e.toString());
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('搜索失败: ${e.toString()}')),
+      );
     } finally {
       setState(() {
         _isLoading = false;
@@ -161,12 +162,14 @@ class _SearchPageState extends State<SearchPage> {
                       itemCount: _searchResults.length,
                       itemBuilder: (context, index) {
                         return InkWell(
-                          onTap: () => _showImageDetail(_searchResults[index]),
+                          onTap: () =>
+                              _showImageDetail(_searchResults[index].imagePath),
                           child: Container(
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(8),
                               image: DecorationImage(
-                                image: AssetImage(_searchResults[index]),
+                                image: NetworkImage(
+                                    _searchResults[index].imagePath),
                                 fit: BoxFit.cover,
                               ),
                             ),

@@ -3,6 +3,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'dart:async';
+import '../../services/api_service.dart';
 
 class InitPictureStorePage extends StatefulWidget {
   const InitPictureStorePage({super.key});
@@ -16,6 +17,7 @@ class InitPictureStorePageState extends State<InitPictureStorePage> {
   final ImagePicker _picker = ImagePicker();
   List<XFile>? _selectedImages;
   double _uploadProgress = 0.0;
+  final ApiService _apiService = ApiService();
 
   @override
   void initState() {
@@ -61,22 +63,30 @@ class InitPictureStorePageState extends State<InitPictureStorePage> {
       return;
     }
 
-    for (int i = 0; i < _selectedImages!.length; i++) {
-      await Future.delayed(const Duration(milliseconds: 500), () {
-        setState(() {
-          _uploadProgress = (i + 1) / _selectedImages!.length;
-        });
-      });
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('所有图片上传完成')),
-    );
-
     setState(() {
-      _selectedImages = null;
       _uploadProgress = 0.0;
     });
+
+    try {
+      final files = _selectedImages!.map((xFile) => File(xFile.path)).toList();
+      final result = await _apiService.uploadInitImages(
+        files,
+        'user_123', // TODO: 替换为实际的用户ID
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result['message'])),
+      );
+
+      setState(() {
+        _selectedImages = null;
+        _uploadProgress = 1.0;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('上传失败: ${e.toString()}')),
+      );
+    }
   }
 
   @override
@@ -161,7 +171,8 @@ class InitPictureStorePageState extends State<InitPictureStorePage> {
                     const SizedBox(height: 10),
                     Text(
                       '上传进度：${(_uploadProgress * 100).toStringAsFixed(0)}%',
-                      style: const TextStyle(fontSize: 14, color: Colors.black87),
+                      style:
+                          const TextStyle(fontSize: 14, color: Colors.black87),
                     ),
                   ],
                 ),

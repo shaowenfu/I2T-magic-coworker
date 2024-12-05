@@ -39,3 +39,4 @@ def calculate_similarity(vector1, vector2):
         torch.tensor(vector1).unsqueeze(0),
         torch.tensor(vector2).unsqueeze(0)
     ).item()
+

@@ -40,7 +40,7 @@ class _GeneratePageState extends State<GeneratePage> {
     try {
       final imagePath = await _apiService.generateImage(
         _descriptionController.text,
-        'user_123', // TODO: 替换为实际的用户ID
+        '123456', // TODO: 替换为实际的用户ID
       );
       setState(() {
         _generatedImagePath = imagePath;

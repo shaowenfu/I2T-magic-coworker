@@ -26,33 +26,41 @@ class _GeneratePageState extends State<GeneratePage> {
   final ApiService _apiService = ApiService();
 
   Future<void> _generateImage() async {
-    if (_descriptionController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请输入图片描述')),
-      );
-      return;
-    }
-
     setState(() {
       _isGenerating = true;
     });
 
     try {
+      debugPrint('开始生成图片...');
       final imagePath = await _apiService.generateImage(
         _descriptionController.text,
-        '123456', // TODO: 替换为实际的用户ID
+        '123456',
       );
+      debugPrint('图片生成成功: $imagePath');
       setState(() {
         _generatedImagePath = imagePath;
       });
     } catch (e) {
+      debugPrint('图片生成失败: $e');
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('生成失败: ${e.toString()}')),
+        SnackBar(
+          content: Text('生成失败: ${e.toString()}'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+          action: SnackBarAction(
+            label: '重试',
+            textColor: Colors.white,
+            onPressed: _generateImage,
+          ),
+        ),
       );
     } finally {
-      setState(() {
-        _isGenerating = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isGenerating = false;
+        });
+      }
     }
   }
 
@@ -265,10 +273,43 @@ class _GeneratePageState extends State<GeneratePage> {
                   height: 300,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    image: DecorationImage(
-                      image: AssetImage(_generatedImagePath!),
-                      fit: BoxFit.cover,
-                    ),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Image.network(
+                    _generatedImagePath!,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Center(
+                        child: CircularProgressIndicator(
+                          value: loadingProgress.expectedTotalBytes != null
+                              ? loadingProgress.cumulativeBytesLoaded /
+                                  loadingProgress.expectedTotalBytes!
+                              : null,
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      debugPrint('图片加载错误: $error');
+                      // 添加重试按钮
+                      return Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text('图片加载失败'),
+                            TextButton(
+                              onPressed: () {
+                                setState(() {
+                                  // 触发重新加载
+                                  _generatedImagePath = _generatedImagePath;
+                                });
+                              },
+                              child: const Text('重试'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
                 ),
             ],

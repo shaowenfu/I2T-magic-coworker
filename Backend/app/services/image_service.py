@@ -11,8 +11,14 @@ class ImageService:
         # 生成唯一文件名
         filename = f"{user_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"
         
-        # 保存图片
-        file_path = save_image(file, filename)
+        #判断是否创建上传文件夹
+        upload_folder = os.path.join(current_app.instance_path, 'uploads')
+        if not os.path.exists(upload_folder):
+            os.makedirs(upload_folder)
+        
+        # 保存图片到指定路径
+        file_path = os.path.join(upload_folder, filename)
+        file.save(file_path)
         
         # 压缩图片
         with PILImage.open(file_path) as img:

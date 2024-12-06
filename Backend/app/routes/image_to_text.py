@@ -1,7 +1,10 @@
 from flask import Blueprint, request, jsonify
 from app.services.ai_service import AIService
 from app.services.image_service import ImageService
+from app.services.user_service import UserService
 from app.models.text import Text
+from app.utils.id_generator import generate_text_id
+from app.utils.constants import TextCategory
 from app import db
 
 image_to_text_bp = Blueprint('image_to_text', __name__)
@@ -16,6 +19,9 @@ def generate_text():
     user_id = request.form.get('user_id')
     
     try:
+        # 确保用户存在
+        user = UserService.get_or_create_user(user_id)
+        
         # 处理上传的图片
         image_path = ImageService.process_upload(file, user_id)
         
@@ -24,9 +30,10 @@ def generate_text():
         
         # 保存到数据库
         text = Text(
+            text_id=generate_text_id(),
             user_id=user_id,
             content=generated_text,
-            category='AI生成'
+            category=TextCategory.AI_GENERATED
         )
         db.session.add(text)
         db.session.commit()

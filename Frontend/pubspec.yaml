@@ -33,6 +33,7 @@ dependencies:
   permission_handler: ^10.0.0
   flutter_swiper_null_safety: ^1.0.0
   image_picker: ^0.8.4+4  # 确保版本号是最新的
+  logging: ^1.2.0
 
 
   # The following adds the Cupertino Icons font to your application.
@@ -49,6 +50,9 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^4.0.0
+
+  mockito: ^5.4.4
+  build_runner: ^2.4.8
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

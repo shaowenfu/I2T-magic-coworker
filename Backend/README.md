@@ -21,7 +21,7 @@
     - Flask-Migrate：用于数据库迁移。
     - Flask-RESTful：用于快速创建RESTful API。
 2. **实现 RESTful API**：
-    - 定义四组核心功能的接口，包括数据库初始化、图片搜索、文生图和图生文。
+    - 定义四组核心功能的接口，包括数据库初始化、图片搜索、���成图和图生文。
 3. **封装数据库操作**：
     - 提供统一的数据库操作接口以简化代码。
 4. **文件处理与模型调用**：
@@ -61,28 +61,68 @@ backend/
 
 ## 数据库设计：
 
-**表一：图片存储**
 
-| Keys |      img_ID（main key) | Text_ID | user_id | created_time | catagory | feature_vector | image_path |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| describe | 图片编号 | 关联文本 | 关联用户 | 创建时间 | 图片来源 | 图片向量 | 图片路径 |
-| instance | 01 | 02 | 123456 | 2024/12/3 15:21 | 用户上传 | (JSON) |  |
-|  |  |  |  |  | AI生成 |  |  |
 
-**表二：用户**
+# 数据库设计
 
-| keys | user_id（main key) | username | email | password | register | last_sign_in |
-| --- | --- | --- | --- | --- | --- | --- |
-| describe | 用户唯一标识 | 用户名字（string类型)） | 用户邮箱（默认为null） | 密码 | 注册时间 | 上一次登录时间 |
-| instance | 01 | sherwen | 3378*****@**mail.com | 123456 | 2024/12/3 15:21 | 2024/12/3 15:21 |
+## 表结构
 
-表三：文本存储
+### 1. 用户表 (users)
 
-| keys | Text_ID | img_ID | user_id | created_time | catagory | feature_vector |
-| --- | --- | --- | --- | --- | --- | --- |
-| describe | 文本编号 | 关联图像（默认为空） | 关联用户 | 创建时间 | 文本来源 | 文本向量 |
-| instance | 02 | 01 | 123456 | 2024/12/3 15:21 | 用户上传 | (JSON) |
-|  |  |  |  |  | AI生成 |  |
+| 字段名 | 类型 | 描述 | 约束 |
+|--------|------|------|------|
+| user_id | VARCHAR(255) | 用户唯一标识 | PRIMARY KEY |
+| username | VARCHAR(255) | 用户名 | NOT NULL |
+| email | VARCHAR(255) | 用户邮箱 | 可为空 |
+| password | VARCHAR(255) | 用户密码 | NOT NULL |
+| register | TIMESTAMP | 注册时间 | DEFAULT CURRENT_TIMESTAMP |
+| last_sign_in | TIMESTAMP | 最后登��时间 | DEFAULT CURRENT_TIMESTAMP |
+
+### 2. 图片存储表 (images)
+
+| 字段名 | 类型 | 描述 | 约束 |
+|--------|------|------|------|
+| img_id | VARCHAR(255) | 图片唯一标识 | PRIMARY KEY |
+| user_id | VARCHAR(255) | 关联用户 | FOREIGN KEY -> users(user_id) |
+| created_time | TIMESTAMP | 创建时间 | DEFAULT CURRENT_TIMESTAMP |
+| category | VARCHAR(50) | 图片来源 | CHECK (IN ('user_upload', 'ai_generated')) |
+| feature_vector | JSONB | 图片特征向量 | 可为空 |
+| image_path | VARCHAR(255) | 图片存储路径 | 可为空 |
+
+### 3. 文本存储表 (texts)
+
+| 字段名 | 类型 | 描述 | 约束 |
+|--------|------|------|------|
+| text_id | VARCHAR(255) | 文本唯一标识 | PRIMARY KEY |
+| user_id | VARCHAR(255) | 关联用户 | FOREIGN KEY -> users(user_id) |
+| created_time | TIMESTAMP | 创建时间 | DEFAULT CURRENT_TIMESTAMP |
+| category | VARCHAR(50) | 文本来源 | CHECK (IN ('user_input', 'ai_generated')) |
+| feature_vector | JSONB | 文本特征向量 | 可为空 |
+| content | TEXT | 文本内容 | 可为空 |
+
+### 4. 图片文本关联表 (image_text_relations)
+
+| 字段名 | 类型 | 描述 | 约束 |
+|--------|------|------|------|
+| id | SERIAL | 关联记录ID | PRIMARY KEY |
+| img_id | VARCHAR(255) | 关联图片ID | FOREIGN KEY -> images(img_id) |
+| text_id | VARCHAR(255) | 关联文本ID | FOREIGN KEY -> texts(text_id) |
+| created_time | TIMESTAMP | 创建时间 | DEFAULT CURRENT_TIMESTAMP |
+
+## 索引设计
+
+为提高查询性能，建立以下索引：
+- `idx_images_user_id`: 图片表用户ID索引
+- `idx_texts_user_id`: 文本表用户ID索引
+- `idx_relations_img_id`: 关联表图片ID索引
+- `idx_relations_text_id`: 关联表文本ID索引
+
+## 关系说明
+
+- 用户(users) 1:N 图片(images)
+- 用户(users) 1:N 文本(texts)
+- 图片(images) M:N 文本(texts)，通过 image_text_relations 表关联
+
 
 ## 功能特性
 核心功能：
@@ -126,7 +166,6 @@ backend/
   - GPT-2：用于图生文
 - **工具库：**
   - Pillow：图像处理
-  - transformers：模型调用
   - psycopg2：PostgreSQL连接
   - Flask-Migrate：数据库迁移
 
@@ -147,7 +186,7 @@ pip install -r requirements.txt
 ### 2. 配置
 1. 修改 `config.py` 中的数据库连接信息：
 ```python
-SQLALCHEMY_DATABASE_URI = 'postgresql://username:password@localhost:5432/your_database'
+SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:fuxiao0714.postgresql@localhost:5432/I2T_magic_db'
 ```
 
 2. 设置API密钥（如果使用）：

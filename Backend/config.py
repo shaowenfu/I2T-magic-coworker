@@ -2,7 +2,7 @@ import os
 
 class Config:
     # 数据库配置
-    SQLALCHEMY_DATABASE_URI = 'postgresql://username:password@localhost:5432/your_database'
+    SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:fuxiao0714.postgresql@localhost:5432/I2T_magic_db?client_encoding=utf8'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # 文件上传配置

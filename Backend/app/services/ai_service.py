@@ -19,7 +19,7 @@ class AIService:
                 {
                     "role": "user",
                     "content": f"Please translate and refine the following Chinese prompt{text} into a detailed and enriched "
-                               "English prompt suitable for image generation models. "
+                               "English prompt suitable for image generation models. Please just give the new prompt"
                 }
             ]
         }
@@ -47,12 +47,15 @@ class AIService:
         return content
 
     @staticmethod
-    def generate_image_from_text(text):
+    def generate_image_from_text(text,selectedSize):
         """文本生成图片"""
         import requests
-
-        url = "https://api.siliconflow.cn/v1/images/generations"
-
+        if selectedSize == 'Small':
+            image_size = "768x512"
+        elif selectedSize == 'Medium':
+            image_size = "768x1024"
+        elif selectedSize == 'Large':
+            image_size = "1024x1024"
         # payload = {
         #     "model": "black-forest-labs/FLUX.1-dev",
         #     "prompt": f"{text}",
@@ -65,15 +68,19 @@ class AIService:
         #     "Authorization": "Bearer sk-apicdtvngpwcxtyutoftsmxgsxwltoftncmzbaeehbrbqlem",
         #     "Content-Type": "application/json"
         # }
+        url = "https://api.siliconflow.cn/v1/images/generations"
+
         payload = {
             "model": "black-forest-labs/FLUX.1-schnell",
-            "prompt": "小猫",
-            "image_size": "768x512"
+            "image_size": f"{image_size}",
+            "prompt_enhancement": True,
+            "prompt": f"{text}"
         }
         headers = {
             "Authorization": "Bearer sk-apicdtvngpwcxtyutoftsmxgsxwltoftncmzbaeehbrbqlem",
             "Content-Type": "application/json"
         }
+
 
         response = requests.request("POST", url, json=payload, headers=headers)
 
@@ -95,6 +102,7 @@ class AIService:
             print("Failed to get a successful response")
             print("Status Code:", response.status_code)
             print("Response Text:", response.text)
+
 
 
         return img_url

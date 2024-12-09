@@ -64,12 +64,14 @@ class ApiService {
   }
 
   // 文生图
-  Future<String> generateImage(String text, String userId) async {
+  Future<String> generateImage(String text, String userId, String selectedSize,
+      String selectedStyle) async {
     try {
-      final url = '$baseUrl/api/generate/image';
+      const url = '$baseUrl/api/generate/image';
       debugPrint('正在连接服务器...');
       debugPrint('请求URL: $url');
       debugPrint('请求参数: text=$text, userId=$userId');
+      debugPrint('请求参数: size=$selectedSize, style=$selectedStyle');
 
       final response = await client
           .post(
@@ -78,6 +80,8 @@ class ApiService {
             body: jsonEncode({
               'text': text,
               'user_id': userId,
+              'size': selectedSize,
+              'style': selectedStyle,
             }),
           )
           .timeout(const Duration(seconds: 30)); // 增加超时时间
@@ -88,7 +92,6 @@ class ApiService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final imagePath = data['image_path'];
-        debugPrint('Generated Image URL: $imagePath');
         return imagePath;
       } else {
         throw Exception('生成失败: ${response.statusCode}');

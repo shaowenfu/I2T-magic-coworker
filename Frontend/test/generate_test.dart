@@ -28,7 +28,7 @@ void main() {
     const testPrompt = '一只可爱的小猫咪在草地上玩耍';
     const testUserId = '123456';
 
-    final imagePath = await apiService.generateImage(testPrompt, testUserId);
+    final imagePath = await apiService.generateImage(testPrompt, testUserId, "Small","photo");
     expect(imagePath, 'images/test.jpg');
   });
 }

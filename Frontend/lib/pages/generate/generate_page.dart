@@ -1,3 +1,7 @@
+import 'dart:io';
+import 'dart:typed_data';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
 
@@ -14,7 +18,6 @@ class _GeneratePageState extends State<GeneratePage> {
   String _selectedStyle = 'Photorealistic';
   bool _isGenerating = false;
   String? _generatedImagePath;
-
   final List<String> _styleOptions = [
     'Photorealistic',
     'Artistic',
@@ -24,6 +27,7 @@ class _GeneratePageState extends State<GeneratePage> {
   ];
 
   final ApiService _apiService = ApiService();
+  Timer? _imageCheckTimer;
 
   Future<void> _generateImage() async {
     setState(() {
@@ -33,27 +37,17 @@ class _GeneratePageState extends State<GeneratePage> {
     try {
       debugPrint('开始生成图片...');
       final imagePath = await _apiService.generateImage(
-        _descriptionController.text,
-        '123456',
-      );
-      debugPrint('图片生成成功: $imagePath');
+          _descriptionController.text, '123456', _selectedSize, _selectedStyle);
+      debugPrint('图片生成成功:');
       setState(() {
-        _generatedImagePath = imagePath;
+        _generatedImagePath = 'assets/images/downloads/$imagePath';
       });
+      debugPrint('加载路径: $_generatedImagePath');
     } catch (e) {
       debugPrint('图片生成失败: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('生成失败: ${e.toString()}'),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 5),
-          action: SnackBarAction(
-            label: '重试',
-            textColor: Colors.white,
-            onPressed: _generateImage,
-          ),
-        ),
+        SnackBar(content: Text('生成失败: ${e.toString()}')),
       );
     } finally {
       if (mounted) {
@@ -267,49 +261,25 @@ class _GeneratePageState extends State<GeneratePage> {
               ),
               const SizedBox(height: 24),
 
-              // 生成的图片展示
+              // 图片展示
               if (_generatedImagePath != null)
                 Container(
+                  width: double.infinity,
                   height: 300,
                   decoration: BoxDecoration(
+                    color: Colors.grey[100],
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  clipBehavior: Clip.antiAlias,
-                  child: Image.network(
-                    _generatedImagePath!,
-                    fit: BoxFit.cover,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return Center(
-                        child: CircularProgressIndicator(
-                          value: loadingProgress.expectedTotalBytes != null
-                              ? loadingProgress.cumulativeBytesLoaded /
-                                  loadingProgress.expectedTotalBytes!
-                              : null,
-                        ),
-                      );
-                    },
-                    errorBuilder: (context, error, stackTrace) {
-                      debugPrint('图片加载错误: $error');
-                      // 添加重试按钮
-                      return Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Text('图片加载失败'),
-                            TextButton(
-                              onPressed: () {
-                                setState(() {
-                                  // 触发重新加载
-                                  _generatedImagePath = _generatedImagePath;
-                                });
-                              },
-                              child: const Text('重试'),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.asset(
+                      _generatedImagePath!,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        debugPrint('图片加载中...: $error');
+                        return _buildErrorWidget();
+                      },
+                    ),
                   ),
                 ),
             ],
@@ -321,7 +291,21 @@ class _GeneratePageState extends State<GeneratePage> {
 
   @override
   void dispose() {
+    _imageCheckTimer?.cancel();
     _descriptionController.dispose();
     super.dispose();
+  }
+
+  Widget _buildErrorWidget([String? message]) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.broken_image_outlined, size: 48, color: Colors.grey),
+          const SizedBox(height: 8),
+          Text(message ?? '图片加载失败', style: const TextStyle(color: Colors.grey)),
+        ],
+      ),
+    );
   }
 }

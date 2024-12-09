@@ -20,8 +20,8 @@ def generate_image():
         return jsonify({'error': '缺少文本描述'}), 400
 
     text = data['text']
-    user_id = data.get('user_id')
-
+    user_id = data['user_id']
+    selectedSize= data['selectedSize']
     try:
         # 确保用户存在
         user = UserService.get_or_create_user(user_id)
@@ -29,7 +29,7 @@ def generate_image():
         # 优化prompt
         generate_prompt = AIService.generate_txt_from_text(text)
         # 生成图片
-        generated_image_url = AIService.generate_image_from_text(generate_prompt)
+        generated_image_url = AIService.generate_image_from_text(generate_prompt,selectedSize)
 
         # 保存到数据库
         image = Image(
@@ -39,6 +39,9 @@ def generate_image():
             category=ImageCategory.AI_GENERATED
         )
         db.session.add(image)
+
+        # 将图片下载保存到本地
+        image_path = ImageService.download_image(generated_image_url, image.img_id)
 
         # 保存文本
         text_record = Text(
@@ -51,9 +54,10 @@ def generate_image():
 
         db.session.commit()
 
+        
         return jsonify({
             'image_id': image.img_id,
-            'image_path': generated_image_url
+            'image_path': image_path
         })
     except Exception as e:
         db.session.rollback()

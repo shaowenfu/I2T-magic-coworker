@@ -1,6 +1,7 @@
 from PIL import Image as PILImage
 import os
 from flask import current_app
+import requests
 from app.utils.helpers import save_image
 from datetime import datetime
 
@@ -30,6 +31,16 @@ class ImageService:
         return file_path
     
     @staticmethod
-    def get_image_path(image_id):
-        """获取图片路径"""
-        return os.path.join(current_app.config['UPLOAD_FOLDER'], f"{image_id}.jpg")
+    def download_image(image_url, image_id):
+        """下载图片"""
+        response = requests.get(image_url)
+        # 指定下载保存路径
+        download_folder = os.path.join('E:\\all_workspace\\Full_stack_workspace\\I2T_magic\\Frontend\\assets\\images', 'downloads')
+        if not os.path.exists(download_folder):
+            os.makedirs(download_folder)
+        with open(os.path.join(download_folder, f"{image_id}.jpg"), 'wb') as f:
+            f.write(response.content)
+        
+        # 返回图片名
+        return f"{image_id}.jpg"
+

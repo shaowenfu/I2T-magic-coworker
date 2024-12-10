@@ -21,7 +21,7 @@
     - Flask-Migrate：用于数据库迁移。
     - Flask-RESTful：用于快速创建RESTful API。
 2. **实现 RESTful API**：
-    - 定义四组核心功能的接口，包括数据库初始化、图片搜索、���成图和图生文。
+    - 定义四组核心功能的接口，包括数据库初始化、图片搜索、文生图和图生文。
 3. **封装数据库操作**：
     - 提供统一的数据库操作接口以简化代码。
 4. **文件处理与模型调用**：
@@ -46,7 +46,7 @@ backend/
 │   │   ├── init_db.py          # 数据库初始化接口：处理图片上传和向量化
 │   │   ├── search.py           # 图片搜索接口：处理文本搜索请求
 │   │   ├── text_to_image.py    # 文生图路由：处理文本生成图片请求
-│   │   └── image_to_text.py    # 图生文路由：处理图片生成文本请求
+│   │   └── image_to_text.py    # 图生文路由���处理图片生成文本请求
 │   ├── services/               # 服务层目录
 │   │   ├── __init__.py         # 服务包初始化
 │   │   ├── ai_service.py       # AI服务：处理模型调用和生成任务
@@ -76,7 +76,7 @@ backend/
 | email | VARCHAR(255) | 用户邮箱 | 可为空 |
 | password | VARCHAR(255) | 用户密码 | NOT NULL |
 | register | TIMESTAMP | 注册时间 | DEFAULT CURRENT_TIMESTAMP |
-| last_sign_in | TIMESTAMP | 最后登��时间 | DEFAULT CURRENT_TIMESTAMP |
+| last_sign_in | TIMESTAMP | 最后登录时间 | DEFAULT CURRENT_TIMESTAMP |
 
 ### 2. 图片存储表 (images)
 
@@ -247,14 +247,24 @@ python run.py
 
 ## 开发进展
 
-### 2024-03-xx
+### 2024-03-21
 - [x] 完成基础框架搭建
 - [x] 实现数据库模型
 - [x] 实现核心服务层
 - [x] 完成API接口开发
+- [x] 完成文生图功能
+  - 支持中英文prompt输入
+  - 支持三种图片尺寸选择（Small: 768x512, Medium: 768x1024, Large: 1024x1024）
+  - 集成FLUX模型进行图片生成
+- [x] 完成图生文功能
+  - 支持图片描述生成
+  - 集成InternVL2模型进行图片理解
+  - 支持中英文输出切换
 
 ### 待办事项
 - [ ] 添加用户认证
+- [ ] 实现图片向量化存储功能
+- [ ] 实现基于向量的图片检索功能
 - [ ] 优化向量检索性能
 - [ ] 添加缓存机制
 - [ ] 完善错误处理

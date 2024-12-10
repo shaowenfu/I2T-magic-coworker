@@ -13,7 +13,7 @@ class ImageService:
         filename = f"{user_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"
         
         #判断是否创建上传文件夹
-        upload_folder = os.path.join(current_app.instance_path, 'uploads')
+        upload_folder = os.path.join('E:\\all_workspace\\Full_stack_workspace\\I2T_magic\\Frontend\\assets\\images', 'uploads')
         if not os.path.exists(upload_folder):
             os.makedirs(upload_folder)
         

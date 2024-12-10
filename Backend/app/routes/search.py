@@ -1,5 +1,8 @@
 from flask import Blueprint, request, jsonify
 from app.services.vector_service import VectorService
+from PIL import Image
+import requests
+from transformers import ChineseCLIPProcessor, ChineseCLIPModel
 
 search_bp = Blueprint('search', __name__)
 
@@ -12,19 +15,31 @@ def search_images():
         return jsonify({'error': '缺少搜索文本'}), 400
         
     text = data['text']
-    threshold = data.get('threshold', 0.5)  # 相似度阈值，默认0.5
     
     try:
-        similar_images = VectorService.search_similar_images(text, threshold)
+        # 加载模型和处理器
+        model = ChineseCLIPModel.from_pretrained("OFA-Sys/chinese-clip-vit-base-patch16")
+        processor = ChineseCLIPProcessor.from_pretrained("OFA-Sys/chinese-clip-vit-base-patch16")
+        
+        # 处理输入文本
+        text_inputs = processor(text=text, padding=True, return_tensors="pt")
+        text_features = model.get_text_features(**text_inputs)
+        text_features = text_features / text_features.norm(p=2, dim=-1, keepdim=True)
+        
+        # 获取数据库中所有图片并计算相似度
+        similar_images = VectorService.compute_similarities(text_features, model, processor)
+        
+        # 返回相似度最高的5张图片
+        top_5_results = sorted(similar_images, key=lambda x: x['similarity'], reverse=True)[:5]
         
         return jsonify({
             'results': [
                 {
                     'image_id': result['image'].img_id,
                     'image_path': result['image'].image_path,
-                    'similarity': result['similarity']
+                    'similarity': float(result['similarity'])
                 }
-                for result in similar_images
+                for result in top_5_results
             ]
         })
     except Exception as e:

@@ -84,7 +84,7 @@ class ApiService {
               'style': selectedStyle,
             }),
           )
-          .timeout(const Duration(seconds: 30)); // 增加超时时间
+          .timeout(const Duration(seconds: 60)); // 增加超时时间
 
       debugPrint('服务器响应状态码: ${response.statusCode}');
       debugPrint('服务器响应内容: ${response.body}');
@@ -109,21 +109,22 @@ class ApiService {
   }
 
   // 图生文
-  Future<String> generateText(File image, String userId) async {
+  Future<String> generateText(String imagePath, String userId) async {
+    debugPrint('开始调用接口');
+    debugPrint('图片路径: $imagePath');
+    debugPrint('用户ID: $userId');
     var uri = Uri.parse('$baseUrl/api/generate/text');
     var request = http.MultipartRequest('POST', uri);
 
     request.fields['user_id'] = userId;
-    request.files.add(
-      await http.MultipartFile.fromPath(
-        'image',
-        image.path,
-      ),
-    );
+    request.fields['image_path'] = imagePath;
 
+    debugPrint('开始发送请求：$request');
     var response = await request.send();
+    debugPrint('请求发送完毕');
+    debugPrint('服务器响应状态码: ${response.statusCode}');
+    debugPrint('服务器响应内容: ${response.body}');
     var responseData = await response.stream.bytesToString();
-
     if (response.statusCode == 200) {
       final data = jsonDecode(responseData);
       return data['text'];
@@ -131,4 +132,8 @@ class ApiService {
       throw Exception('生成失败: ${response.statusCode}');
     }
   }
+}
+
+extension on http.StreamedResponse {
+  get body => null;
 }

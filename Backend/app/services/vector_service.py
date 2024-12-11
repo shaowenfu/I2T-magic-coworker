@@ -13,9 +13,9 @@ class VectorService:
         self.db_session = db_session
         
     def get_image_paths(self, user_id=None):
-        """获取指定用户或所有用户的图片路径"""
+        """获取指定用户上传的图片路径"""
         try:
-            query = select(ImageModel)
+            query = select(ImageModel).where(ImageModel.category == ImageCategory.USER_UPLOAD)
             if user_id:
                 query = query.where(ImageModel.user_id == user_id)
                 

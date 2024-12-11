@@ -3,6 +3,13 @@ import '../../services/api_service.dart';
 import '../../models/image_result.dart';
 import 'dart:io';
 
+// 添加颜色常量
+const Color kPrimaryColor = Color(0xFF456173); // 深蓝灰色
+const Color kAccentColor = Color(0xFF4EBF4B); // 绿色
+const Color kSecondaryColor = Color(0xFFF2B872); // 浅橙色
+const Color kTertiaryColor = Color(0xFFBF895A); // 棕色
+const Color kErrorColor = Color(0xFFA62317); // 红色
+
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
 
@@ -69,22 +76,33 @@ class _SearchPageState extends State<SearchPage> {
             // 顶部Logo和名称
             Container(
               padding: const EdgeInsets.all(16.0),
+              decoration: BoxDecoration(
+                color: kPrimaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: Row(
                 children: [
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFB6D6F2),
+                      color: kSecondaryColor,
                       borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: kPrimaryColor.withOpacity(0.2),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.auto_awesome,
                       size: 24,
-                      color: Color(0xFF8C3718),
+                      color: kPrimaryColor,
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const Column(
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
@@ -92,14 +110,14 @@ class _SearchPageState extends State<SearchPage> {
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF404040),
+                          color: kPrimaryColor,
                         ),
                       ),
                       Text(
                         '图文助手',
                         style: TextStyle(
                           fontSize: 14,
-                          color: Color(0xFF80848C),
+                          color: kPrimaryColor.withOpacity(0.7),
                         ),
                       ),
                     ],
@@ -118,13 +136,25 @@ class _SearchPageState extends State<SearchPage> {
                       controller: _searchController,
                       decoration: InputDecoration(
                         hintText: '输入关键词搜索图片...',
+                        hintStyle:
+                            TextStyle(color: kPrimaryColor.withOpacity(0.5)),
                         filled: true,
-                        fillColor: Colors.grey[100],
+                        fillColor: kPrimaryColor.withOpacity(0.05),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
+                          borderSide:
+                              BorderSide(color: kPrimaryColor.withOpacity(0.1)),
                         ),
-                        prefixIcon: const Icon(Icons.search),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide:
+                              BorderSide(color: kPrimaryColor.withOpacity(0.1)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: kAccentColor),
+                        ),
+                        prefixIcon: Icon(Icons.search, color: kPrimaryColor),
                       ),
                       onSubmitted: _performSearch,
                     ),
@@ -133,11 +163,12 @@ class _SearchPageState extends State<SearchPage> {
                   ElevatedButton(
                     onPressed: () => _performSearch(_searchController.text),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF8C3718),
+                      backgroundColor: kAccentColor,
                       padding: const EdgeInsets.all(16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
+                      elevation: 2,
                     ),
                     child: const Icon(
                       Icons.search,
@@ -151,7 +182,11 @@ class _SearchPageState extends State<SearchPage> {
             // 搜索结果展示
             Expanded(
               child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(kAccentColor),
+                      ),
+                    )
                   : ListView.builder(
                       padding: const EdgeInsets.all(16),
                       itemCount: _searchResults.length,
@@ -171,43 +206,62 @@ class _SearchPageState extends State<SearchPage> {
                                 borderRadius: const BorderRadius.vertical(
                                   top: Radius.circular(12),
                                 ),
-                                child: Image.file(
-                                  File(result.imagePath),
-                                  width: double.infinity,
-                                  height: 200,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Container(
+                                child: Stack(
+                                  children: [
+                                    Image.file(
+                                      File(result.imagePath),
                                       width: double.infinity,
                                       height: 200,
-                                      color: Colors.grey[200],
-                                      child: const Center(
-                                        child: Icon(
-                                          Icons.error_outline,
-                                          size: 40,
-                                          color: Colors.grey,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                              // 相似度信息
-                              Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.analytics_outlined,
-                                      color: Color(0xFF8C3718),
+                                      fit: BoxFit.cover,
+                                      errorBuilder:
+                                          (context, error, stackTrace) {
+                                        return Container(
+                                          width: double.infinity,
+                                          height: 200,
+                                          color: kPrimaryColor.withOpacity(0.1),
+                                          child: Center(
+                                            child: Icon(
+                                              Icons.error_outline,
+                                              size: 40,
+                                              color: kErrorColor,
+                                            ),
+                                          ),
+                                        );
+                                      },
                                     ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      '相似度: ${result.similarity.toString()}',
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF404040),
+                                    Positioned(
+                                      top: 8,
+                                      right: 8,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 6,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color:
+                                              kSecondaryColor.withOpacity(0.9),
+                                          borderRadius:
+                                              BorderRadius.circular(20),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.analytics_outlined,
+                                              color: kPrimaryColor,
+                                              size: 16,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              '相似度: ${result.similarity.toString()}',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.bold,
+                                                color: kPrimaryColor,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   ],

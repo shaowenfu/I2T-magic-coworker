@@ -30,7 +30,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  permission_handler: ^10.0.0
+  permission_handler: ^11.2.0
   flutter_swiper_null_safety: ^1.0.0
   logging: ^1.2.0
   path_provider: ^2.1.2

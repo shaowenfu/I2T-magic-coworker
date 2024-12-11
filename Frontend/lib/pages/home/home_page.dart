@@ -4,46 +4,63 @@ import 'package:i2t_magic_frontend/pages/search/search_page.dart';
 import 'package:i2t_magic_frontend/pages/generate/generate_page.dart';
 import 'package:i2t_magic_frontend/pages/text_generate/text_generate_page.dart';
 
+const Color kPrimaryColor = Color(0xFF456173); // 深蓝灰色
+const Color kAccentColor = Color(0xFF4EBF4B); // 绿色
+const Color kSecondaryColor = Color(0xFFF2B872); // 浅橙色
+const Color kTertiaryColor = Color(0xFFBF895A); // 棕色
+const Color kErrorColor = Color(0xFFA62317); // 红色
+
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.all(20.0),
+      decoration: BoxDecoration(
+        color: kPrimaryColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFB6D6F2),
+                  color: kSecondaryColor,
                   borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: kPrimaryColor.withOpacity(0.2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.auto_awesome,
                   size: 32,
-                  color: Color(0xFF8C3718),
+                  color: kPrimaryColor,
                 ),
               ),
-              const SizedBox(width: 12),
-              const Text(
+              const SizedBox(width: 16),
+              Text(
                 'I2T Magic',
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF404040),
+                  color: kPrimaryColor,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          const Text(
+          const SizedBox(height: 16),
+          Text(
             '欢迎使用 I2T Magic！轻松探索你的相册',
             style: TextStyle(
               fontSize: 16,
-              color: Color(0xFF80848C),
+              color: kPrimaryColor.withOpacity(0.7),
             ),
           ),
         ],
@@ -78,18 +95,25 @@ class HomePage extends StatelessWidget {
           return Container(
             margin: const EdgeInsets.symmetric(horizontal: 5.0),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              image: DecorationImage(
-                image: AssetImage(carouselItems[index]['image']!),
-                fit: BoxFit.cover,
-                colorFilter: ColorFilter.mode(
-                  Colors.black.withOpacity(0.3),
-                  BlendMode.darken,
-                ),
+              borderRadius: BorderRadius.circular(16),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  kPrimaryColor.withOpacity(0.8),
+                  kTertiaryColor.withOpacity(0.8),
+                ],
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: kPrimaryColor.withOpacity(0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(20.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.end,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -100,6 +124,13 @@ class HomePage extends StatelessWidget {
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black26,
+                          offset: Offset(0, 2),
+                          blurRadius: 4,
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -108,6 +139,13 @@ class HomePage extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 16,
                       color: Colors.white,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black26,
+                          offset: Offset(0, 1),
+                          blurRadius: 2,
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -191,29 +229,43 @@ class HomePage extends StatelessWidget {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         child: Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
             gradient: LinearGradient(
-              colors: gradient,
+              colors: [kPrimaryColor, kTertiaryColor],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: kPrimaryColor.withOpacity(0.2),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(20.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  icon,
-                  size: 32,
-                  color: Colors.white,
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    icon,
+                    size: 32,
+                    color: Colors.white,
+                  ),
                 ),
                 const Spacer(),
                 Text(
@@ -222,14 +274,21 @@ class HomePage extends StatelessWidget {
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
+                    shadows: [
+                      Shadow(
+                        color: Colors.black26,
+                        offset: Offset(0, 1),
+                        blurRadius: 2,
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   description,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: Colors.white70,
+                    color: Colors.white.withOpacity(0.9),
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,

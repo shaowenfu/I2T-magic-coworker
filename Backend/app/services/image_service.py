@@ -41,6 +41,7 @@ class ImageService:
         with open(os.path.join(download_folder, f"{image_id}.jpg"), 'wb') as f:
             f.write(response.content)
         
-        # 返回图片名
-        return f"{image_id}.jpg"
+        # 返回图片路径
+        return os.path.join(download_folder, f"{image_id}.jpg")
+
 

@@ -8,9 +8,20 @@ from app.models.text import Text
 from app.utils.id_generator import generate_image_id, generate_relation_id, generate_text_id
 from app.utils.constants import ImageCategory, TextCategory
 from app import db
+import oss2
+import os
 
 text_to_image_bp = Blueprint('text_to_image', __name__)
 
+# 添加 OSS 配置
+def get_oss_bucket():
+    access_key_id = 'LTAI5tGBrvpuC9e6AMtBdjrD'  # 替换为你的 AccessKeyId
+    access_key_secret = 'WSItd9pqgxodvFsd6MIRxd9pVUWfsP'  # 替换为你的 AccessKeySecret
+    
+    auth = oss2.Auth(access_key_id, access_key_secret)
+    endpoint = 'https://oss-cn-chengdu.aliyuncs.com'  # 使用标准的区域 endpoint
+    bucket_name = 'i2t-magic-coworker'
+    return oss2.Bucket(auth, endpoint, bucket_name)
 
 @text_to_image_bp.route('/api/generate/image', methods=['POST'])
 def generate_image():
@@ -51,8 +62,36 @@ def generate_image():
         db.session.commit()
 
         # 将图片下载保存到本地
-        image_path = ImageService.download_image(generated_image_url, image.img_id)
-        print("图片保存到本地", image_path)
+        local_image_path = ImageService.download_image(generated_image_url, image.img_id)
+        print("图片保存到本地", local_image_path)
+
+        # 上传到 OSS
+        try:
+            bucket = get_oss_bucket()
+            oss_path = f'AIGenerateImage/{image.img_id}.jpg'  # OSS 中的存储路径
+            print("oss_path",oss_path)
+            
+            try:        
+                with open(local_image_path, 'rb') as fileobj:
+                    bucket.put_object(oss_path, fileobj)
+            except Exception as e:
+                print("上传到 OSS 失败:", str(e))
+                raise Exception("上传图片到 OSS 失败")
+            
+            # 构建 OSS 访问 URL
+            oss_url = f'https://i2t-magic-coworker.oss-cn-chengdu.aliyuncs.com/{oss_path}'
+            
+            # 更新数据库中的 image_path 为 OSS URL
+            image.image_path = oss_url
+            db.session.commit()
+            
+            # 删除本地临时文件
+            os.remove(local_image_path)
+            
+        except Exception as e:
+            print("上传到 OSS 失败:", str(e))
+            print("详细错误信息:", str(e.__dict__))  # 打印更详细的错误信息
+            raise Exception(f"上传图片到 OSS 失败: {str(e)}")
 
         # 保存文本
         text_record = Text(
@@ -79,11 +118,11 @@ def generate_image():
 
         print("返回response：",jsonify({
             'image_id': image.img_id,
-            'image_path': image_path
+            'image_path': oss_url
         }))
         return jsonify({
             'image_id': image.img_id,
-            'image_path': image_path
+            'image_path': oss_url
         })
     except Exception as e:
         db.session.rollback()

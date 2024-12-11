@@ -4,6 +4,14 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
+import '../../services/oss_service.dart';
+
+// 添加颜色常量
+const Color kPrimaryColor = Color(0xFF456173); // 深蓝灰色
+const Color kAccentColor = Color(0xFF4EBF4B); // 绿色
+const Color kSecondaryColor = Color(0xFFF2B872); // 浅橙色
+const Color kTertiaryColor = Color(0xFFBF895A); // 棕色
+const Color kErrorColor = Color(0xFFA62317); // 红色
 
 class GeneratePage extends StatefulWidget {
   const GeneratePage({super.key});
@@ -36,13 +44,24 @@ class _GeneratePageState extends State<GeneratePage> {
 
     try {
       debugPrint('开始生成图片...');
-      final imagePath = await _apiService.generateImage(
+      final imageUrl = await _apiService.generateImage(
           _descriptionController.text, '123456', _selectedSize, _selectedStyle);
-      debugPrint('图片生成成功:');
-      setState(() {
-        _generatedImagePath = 'assets/images/downloads/$imagePath';
-      });
-      debugPrint('加载路径: $_generatedImagePath');
+      debugPrint('图片生成成功，OSS地址: $imageUrl');
+
+      // 下载图片到本地
+      final localPath = await FileManager().download(
+        url: imageUrl,
+        fileType: 'jpg',
+      );
+
+      if (localPath != null) {
+        setState(() {
+          _generatedImagePath = localPath;
+        });
+        debugPrint('图片下载��功，本地路径: $_generatedImagePath');
+      } else {
+        throw Exception('图片下载失败');
+      }
     } catch (e) {
       debugPrint('图片生成失败: $e');
       if (!mounted) return;
@@ -68,42 +87,56 @@ class _GeneratePageState extends State<GeneratePage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // 顶部Logo和名称
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFB6D6F2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(
-                      Icons.auto_awesome,
-                      size: 24,
-                      color: Color(0xFF8C3718),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'I2T magic',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF404040),
-                        ),
+              Container(
+                padding: const EdgeInsets.all(16.0),
+                decoration: BoxDecoration(
+                  color: kPrimaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: kSecondaryColor,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: kPrimaryColor.withOpacity(0.2),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
-                      Text(
-                        '图文助手',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Color(0xFF80848C),
-                        ),
+                      child: Icon(
+                        Icons.auto_awesome,
+                        size: 24,
+                        color: kPrimaryColor,
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'I2T magic',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: kPrimaryColor,
+                          ),
+                        ),
+                        Text(
+                          '图文助手',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: kPrimaryColor.withOpacity(0.7),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 24),
 
@@ -111,26 +144,29 @@ class _GeneratePageState extends State<GeneratePage> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.grey[100],
+                  color: kPrimaryColor.withOpacity(0.05),
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: kPrimaryColor.withOpacity(0.1)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Text Description',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF404040),
+                        color: kPrimaryColor,
                       ),
                     ),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _descriptionController,
                       maxLines: 3,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         hintText: 'Describe your image...',
+                        hintStyle:
+                            TextStyle(color: kPrimaryColor.withOpacity(0.5)),
                         border: InputBorder.none,
                       ),
                     ),
@@ -143,18 +179,19 @@ class _GeneratePageState extends State<GeneratePage> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.grey[100],
+                  color: kPrimaryColor.withOpacity(0.05),
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: kPrimaryColor.withOpacity(0.1)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Image Dimensions',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF404040),
+                        color: kPrimaryColor,
                       ),
                     ),
                     Row(
@@ -162,27 +199,30 @@ class _GeneratePageState extends State<GeneratePage> {
                         Radio(
                           value: 'Small',
                           groupValue: _selectedSize,
+                          activeColor: kAccentColor,
                           onChanged: (value) {
                             setState(() => _selectedSize = value.toString());
                           },
                         ),
-                        const Text('Small'),
+                        Text('Small', style: TextStyle(color: kPrimaryColor)),
                         Radio(
                           value: 'Medium',
                           groupValue: _selectedSize,
+                          activeColor: kAccentColor,
                           onChanged: (value) {
                             setState(() => _selectedSize = value.toString());
                           },
                         ),
-                        const Text('Medium'),
+                        Text('Medium', style: TextStyle(color: kPrimaryColor)),
                         Radio(
                           value: 'Large',
                           groupValue: _selectedSize,
+                          activeColor: kAccentColor,
                           onChanged: (value) {
                             setState(() => _selectedSize = value.toString());
                           },
                         ),
-                        const Text('Large'),
+                        Text('Large', style: TextStyle(color: kPrimaryColor)),
                       ],
                     ),
                   ],
@@ -194,18 +234,19 @@ class _GeneratePageState extends State<GeneratePage> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.grey[100],
+                  color: kPrimaryColor.withOpacity(0.05),
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: kPrimaryColor.withOpacity(0.1)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Style Options',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF404040),
+                        color: kPrimaryColor,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -214,6 +255,9 @@ class _GeneratePageState extends State<GeneratePage> {
                       decoration: const InputDecoration(
                         border: InputBorder.none,
                       ),
+                      dropdownColor: Colors.white,
+                      style: TextStyle(color: kPrimaryColor),
+                      icon: Icon(Icons.arrow_drop_down, color: kPrimaryColor),
                       items: _styleOptions.map((String style) {
                         return DropdownMenuItem<String>(
                           value: style,
@@ -235,14 +279,15 @@ class _GeneratePageState extends State<GeneratePage> {
               ElevatedButton(
                 onPressed: _isGenerating ? null : _generateImage,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF8C3718),
+                  backgroundColor: kAccentColor,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
+                  elevation: 2,
                 ),
                 child: _isGenerating
-                    ? const SizedBox(
+                    ? SizedBox(
                         height: 24,
                         width: 24,
                         child: CircularProgressIndicator(
@@ -256,6 +301,7 @@ class _GeneratePageState extends State<GeneratePage> {
                         style: TextStyle(
                           fontSize: 18,
                           color: Colors.white,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
               ),
@@ -267,16 +313,24 @@ class _GeneratePageState extends State<GeneratePage> {
                   width: double.infinity,
                   height: 300,
                   decoration: BoxDecoration(
-                    color: Colors.grey[100],
+                    color: kPrimaryColor.withOpacity(0.05),
                     borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: kPrimaryColor.withOpacity(0.1)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: kPrimaryColor.withOpacity(0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: Image.asset(
-                      _generatedImagePath!,
+                    child: Image.file(
+                      File(_generatedImagePath!),
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) {
-                        debugPrint('图片加载中...: $error');
+                        debugPrint('图片加载错误: $error');
                         return _buildErrorWidget();
                       },
                     ),
@@ -301,9 +355,12 @@ class _GeneratePageState extends State<GeneratePage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.broken_image_outlined, size: 48, color: Colors.grey),
+          Icon(Icons.broken_image_outlined, size: 48, color: kErrorColor),
           const SizedBox(height: 8),
-          Text(message ?? '图片加载失败', style: const TextStyle(color: Colors.grey)),
+          Text(
+            message ?? '图片加载失败',
+            style: TextStyle(color: kErrorColor),
+          ),
         ],
       ),
     );

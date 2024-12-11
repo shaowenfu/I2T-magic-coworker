@@ -12,16 +12,22 @@ def save_image(file, filename):
     file.save(file_path)
     return file_path
 
-def get_image_vector(image_path):
-    """获取图片的向量表示"""
+def get_image_vector(image):
+    """获取图片的向量表示
+    Args:
+        image: PIL Image对象
+    Returns:
+        图片的向量表示
+    """
+    print('开始生成图片向量')
     model = CLIPModel.from_pretrained(current_app.config['MODEL_NAME'])
     processor = CLIPProcessor.from_pretrained(current_app.config['MODEL_NAME'])
     
-    image = Image.open(image_path)
+    # 直接使用PIL Image对象，不需要重新打开
     inputs = processor(images=image, return_tensors="pt")
     image_features = model.get_image_features(**inputs)
     
-    return image_features.detach().numpy().tolist()[0]
+    return image_features
 
 def get_text_vector(text):
     """获取文本的向量表示"""

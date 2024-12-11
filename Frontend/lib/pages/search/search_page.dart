@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
 import '../../models/image_result.dart';
+import 'dart:io';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -23,7 +24,7 @@ class _SearchPageState extends State<SearchPage> {
     });
 
     try {
-      final results = await _apiService.searchImages(query);
+      final results = await _apiService.searchImages(query, userId: 'sherwen');
       setState(() {
         _searchResults = results;
       });
@@ -45,9 +46,9 @@ class _SearchPageState extends State<SearchPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Image.asset(
-              imagePath,
-              fit: BoxFit.cover,
+            Image.file(
+              File(imagePath),
+              fit: BoxFit.contain,
             ),
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -151,28 +152,68 @@ class _SearchPageState extends State<SearchPage> {
             Expanded(
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
-                  : GridView.builder(
+                  : ListView.builder(
                       padding: const EdgeInsets.all(16),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 3,
-                        crossAxisSpacing: 10,
-                        mainAxisSpacing: 10,
-                      ),
                       itemCount: _searchResults.length,
                       itemBuilder: (context, index) {
-                        return InkWell(
-                          onTap: () =>
-                              _showImageDetail(_searchResults[index].imagePath),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              image: DecorationImage(
-                                image: NetworkImage(
-                                    _searchResults[index].imagePath),
-                                fit: BoxFit.cover,
+                        final result = _searchResults[index];
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          elevation: 4,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // 图片展示
+                              ClipRRect(
+                                borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(12),
+                                ),
+                                child: Image.file(
+                                  File(result.imagePath),
+                                  width: double.infinity,
+                                  height: 200,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      width: double.infinity,
+                                      height: 200,
+                                      color: Colors.grey[200],
+                                      child: const Center(
+                                        child: Icon(
+                                          Icons.error_outline,
+                                          size: 40,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
                               ),
-                            ),
+                              // 相似度信息
+                              Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.analytics_outlined,
+                                      color: Color(0xFF8C3718),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      '相似度: ${result.similarity.toString()}',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF404040),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         );
                       },

@@ -1,185 +1,203 @@
 import 'package:flutter/material.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:i2t_magic_frontend/services/oss_service.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
-import 'dart:async';
 import '../../services/api_service.dart';
+import '../../common/services_locator.dart';
+import 'dart:io';
 
 class InitPictureStorePage extends StatefulWidget {
-  const InitPictureStorePage({super.key});
+  const InitPictureStorePage({Key? key}) : super(key: key);
 
   @override
-  InitPictureStorePageState createState() => InitPictureStorePageState();
+  State<InitPictureStorePage> createState() => _InitPictureStorePageState();
 }
 
-class InitPictureStorePageState extends State<InitPictureStorePage> {
-  bool _hasPermission = false;
+class _InitPictureStorePageState extends State<InitPictureStorePage> {
+  final ScrollController _imgController = ScrollController();
+  List<XFile> images = [];
+  final ApiService _apiService = getIt<ApiService>();
   final ImagePicker _picker = ImagePicker();
-  List<XFile>? _selectedImages;
-  double _uploadProgress = 0.0;
-  final ApiService _apiService = ApiService();
-
-  @override
-  void initState() {
-    super.initState();
-    _checkAlbumPermission();
-  }
-
-  // 检查相册权限
-  Future<void> _checkAlbumPermission() async {
-    final permissionStatus = await Permission.photos.status;
-    setState(() {
-      _hasPermission = permissionStatus.isGranted;
-    });
-  }
-
-  // 请求相册权限
-  Future<void> _requestAlbumPermission() async {
-    final permissionStatus = await Permission.photos.request();
-    setState(() {
-      _hasPermission = permissionStatus.isGranted;
-    });
-    if (!_hasPermission) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('未获得相册访问权限，请授予权限后重试')),
-      );
-    }
-  }
-
-  // 打开相册选择图片
-  Future<void> _pickImages() async {
-    final List<XFile> pickedFiles = await _picker.pickMultiImage();
-    setState(() {
-      _selectedImages = pickedFiles;
-    });
-  }
-
-  // 模拟图片上传
-  Future<void> _uploadImages() async {
-    if (_selectedImages == null || _selectedImages!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请先选择图片')),
-      );
-      return;
-    }
-
-    setState(() {
-      _uploadProgress = 0.0;
-    });
-
-    try {
-      final files = _selectedImages!.map((xFile) => File(xFile.path)).toList();
-      final result = await _apiService.uploadInitImages(
-        files,
-        'user_123', // TODO: 替换为实际的用户ID
-      );
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result['message'])),
-      );
-
-      setState(() {
-        _selectedImages = null;
-        _uploadProgress = 1.0;
-      });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('上传失败: ${e.toString()}')),
-      );
-    }
-  }
+  bool _isLoading = false;
+  bool _isImagesLoaded = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('相册数据库初始化'),
-        backgroundColor: const Color(0xFFB6D6F2),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text("上传照片"),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(10),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // 权限状态
-            if (!_hasPermission)
-              ElevatedButton.icon(
-                onPressed: _requestAlbumPermission,
-                icon: const Icon(Icons.lock, color: Colors.white),
-                label: const Text('请求相册权限'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.redAccent,
-                ),
-              ),
-            if (_hasPermission) ...[
-              // 选择图片按钮
-              ElevatedButton.icon(
-                onPressed: _pickImages,
-                icon: const Icon(Icons.photo, color: Colors.white),
-                label: const Text('选择图片'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blueAccent,
-                ),
-              ),
-              const SizedBox(height: 10),
-              // 显示已选图片数量及缩略图
-              if (_selectedImages != null && _selectedImages!.isNotEmpty) ...[
-                Text(
-                  '已选择 ${_selectedImages!.length} 张图片',
-                  style: const TextStyle(fontSize: 16, color: Colors.black87),
-                ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  height: 100,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: _selectedImages!.length,
-                    itemBuilder: (context, index) {
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8.0),
-                        child: Image.file(
-                          File(_selectedImages![index].path),
-                          width: 80,
-                          height: 80,
-                          fit: BoxFit.cover,
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-              const SizedBox(height: 10),
-              // 上传按钮
-              ElevatedButton.icon(
-                onPressed: _uploadImages,
-                icon: const Icon(Icons.cloud_upload, color: Colors.white),
-                label: const Text('上传图片'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.greenAccent,
-                ),
-              ),
-              const SizedBox(height: 20),
-              // 上传进度条
-              if (_uploadProgress > 0)
-                Column(
-                  children: [
-                    LinearProgressIndicator(
-                      value: _uploadProgress,
-                      backgroundColor: Colors.grey[300],
-                      color: Colors.blue,
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      '上传进度：${(_uploadProgress * 100).toStringAsFixed(0)}%',
-                      style:
-                          const TextStyle(fontSize: 14, color: Colors.black87),
-                    ),
-                  ],
-                ),
-            ],
+            _buildImageList(),
+            const SizedBox(height: 20),
+            _buildButtons(),
+            const SizedBox(height: 20),
+            _buildSubmitButton(),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildButtons() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        ElevatedButton(
+          onPressed: _openGallery,
+          child: const Text("选择图片"),
+        ),
+        ElevatedButton(
+          onPressed: _isLoading ? null : _loadAllImages,
+          child: _isLoading
+              ? const CircularProgressIndicator(strokeWidth: 2)
+              : const Text("全部加载"),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildImageList() {
+    return Container(
+      height: 100, // 增加高度以便更好地显示图片
+      child: images.isEmpty
+          ? const Center(child: Text("暂无图片"))
+          : ListView.builder(
+              controller: _imgController,
+              scrollDirection: Axis.horizontal,
+              itemCount: images.length,
+              itemBuilder: _buildImageItem,
+            ),
+    );
+  }
+
+  Widget _buildImageItem(BuildContext context, int index) {
+    return Container(
+      width: 100,
+      height: 100,
+      margin: const EdgeInsets.only(right: 10),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(4.0),
+        border: Border.all(color: Colors.black26),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(4.0),
+        child: Image.file(
+          File(images[index].path),
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return const Center(child: Icon(Icons.error));
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<void> _loadAllImages() async {
+    setState(() => _isLoading = true);
+
+    try {
+      // 从服务器获取图片URL列表
+      final imageList = await _apiService.getUserImages('sherwen'); // 替换实际用户ID
+
+      // 清空当前图片列表
+      setState(() {
+        images.clear();
+      });
+
+      // 下载并添加每张图片
+      for (var imageData in imageList) {
+        final localPath =
+            await _apiService.downloadImage(imageData['image_path']);
+        if (localPath != null) {
+          setState(() {
+            images.add(XFile(localPath));
+          });
+        }
+      }
+
+      // 标记图片已加载
+      _isImagesLoaded = true;
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('加载图片失败: $e')),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _openGallery() async {
+    try {
+      final List<XFile> selectedImages = await _picker.pickMultiImage();
+      if (selectedImages.isNotEmpty) {
+        setState(() {
+          images.addAll(selectedImages);
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('选择图片失败: $e')),
+      );
+    }
+  }
+
+  Widget _buildSubmitButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 50,
+      child: ElevatedButton(
+        onPressed: images.isEmpty ? null : _handleSubmit,
+        child: const Text("提交"),
+      ),
+    );
+  }
+
+  Future<void> _handleSubmit() async {
+    if (_isImagesLoaded) {
+      // 如果图片是从服务器加载的，直接返回
+      Navigator.pop(context);
+      return;
+    }
+
+    try {
+      setState(() => _isLoading = true);
+
+      // 上传新选择的图片到OSS
+      final List<String> uploadedUrls = [];
+      for (XFile image in images) {
+        final file = File(image.path);
+        final url = await FileManager().uploadFile(file);
+        if (url != null) {
+          uploadedUrls.add(url);
+        }
+      }
+
+      // 发送URL列表到后端
+      await _apiService.uploadInitImages(uploadedUrls, 'sherwen');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('上传成功')),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('上传失败: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 }

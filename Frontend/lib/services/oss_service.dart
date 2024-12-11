@@ -43,7 +43,7 @@ class FileManager {
    * @params rootDir 阿里云oss设置的根目录文件夹名字
    * @param fileType 文件类型例如jpg,mp4等
    * @param callback 回调函数我这里用于传cancelToken，方便后期关闭请求
-   * @param onSendProgress ��传的进度事件
+   * @param onSendProgress 传的进度事件
    * 参考文档https://help.aliyun.com/zh/oss/developer-reference/postobject#section-mcg-hq4-y1k
    */
 
@@ -99,20 +99,26 @@ class FileManager {
       {required String url, required String fileType}) async {
     BaseOptions options = BaseOptions();
     options.responseType = ResponseType.bytes;
-    //创建dio对象
     Dio dio = Dio(options);
-    Response<Uint8List> response;
 
     try {
-      // 发送请求
-      response = await dio.get<Uint8List>(url); //图片或视频的oss地址
-      // 存储到本地
-      _saveImageToFile(response, fileType);
-      print('Image downloaded successfully to: ${response.data}');
-      // 成功后返回文件访问路径
-      return '$url';
+      final response = await dio.get<Uint8List>(url);
+      // 获取临时目录
+      final tempDir = await getTemporaryDirectory();
+      // 创建文件名
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}.$fileType';
+      // 完整的文件路径
+      final filePath = '${tempDir.path}/$fileName';
+
+      // 将数据写入文件
+      final file = File(filePath);
+      await file.writeAsBytes(response.data!);
+
+      // 返回本地文件路径
+      return filePath;
     } catch (e) {
-      print(e);
+      debugPrint('下载失败: $e');
+      return null;
     }
   }
 
@@ -174,7 +180,7 @@ class FileManager {
 
   /// 获取签名
   static String getSignature(String policyText) {
-    //进���utf8编码
+    //进行utf8编码
     List<int> policyText_utf8 = utf8.encode(policyText);
     //进行base64编码
     String policy_base64 = base64.encode(policyText_utf8);

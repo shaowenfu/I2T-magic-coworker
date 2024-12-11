@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'constants/app_constants.dart';
 import 'pages/welcome/welcome_page.dart';
 import 'pages/main_navigation.dart';
+import 'common/services_locator.dart';
 
 void main() {
+  setupServices();
   runApp(const MyApp());
 }
 

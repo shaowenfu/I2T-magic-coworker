@@ -27,7 +27,7 @@ class ApiService {
   Future<Map<String, dynamic>> uploadInitImages(
       List<String> imageUrls, String userId) async {
     var uri = Uri.parse('$baseUrl/api/init/upload');
-
+    debugPrint('开始发送URL列表到后端');
     final body = {
       'user_id': userId,
       'image_urls': imageUrls,

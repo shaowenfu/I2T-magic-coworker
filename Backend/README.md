@@ -21,7 +21,7 @@
     - Flask-Migrate：用于数据库迁移。
     - Flask-RESTful：用于快速创建RESTful API。
 2. **实现 RESTful API**：
-    - 定义四组核心功能的接口，包括数据库初始化、图片搜索、文生图和图生文。
+    - 定义四组核心功能的接口，包括数据库初始化、图片搜索、���生图和图生文。
 3. **封装数据库操作**：
     - 提供统一的数据库操作接口以简化代码。
 4. **文件处理与模型调用**：
@@ -46,7 +46,7 @@ backend/
 │   │   ├── init_db.py          # 数据库初始化接口：处理图片上传和向量化
 │   │   ├── search.py           # 图片搜索接口：处理文本搜索请求
 │   │   ├── text_to_image.py    # 文生图路由：处理文本生成图片请求
-│   │   └── image_to_text.py    # 图生文路由���处理图片生成文本请求
+│   │   └── image_to_text.py    # 图生文路由：处理图片生成文本请求
 │   ├── services/               # 服务层目录
 │   │   ├── __init__.py         # 服务包初始化
 │   │   ├── ai_service.py       # AI服务：处理模型调用和生成任务
@@ -162,54 +162,30 @@ backend/
 - **数据库：** PostgreSQL
 - **AI模型：** 
   - CLIP：用于图文向量化
-  - Stable Diffusion：用于文生图
-  - GPT-2：用于图生文
+  - FLUX：用于文生图（更新自 Stable Diffusion）
+  - InternVL2：用于图生文（更新自 GPT-2）
 - **工具库：**
   - Pillow：图像处理
   - psycopg2：PostgreSQL连接
   - Flask-Migrate：数据库迁移
+  - transformers：Hugging Face模型加载
+  - torch：深度学习框架
 
-## 安装说明
+## 模型说明
 
-### 1. 环境准备
-```bash
-# 创建虚拟环境
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# 或
-.\venv\Scripts\activate  # Windows
+### FLUX模型
+- 支持中英文prompt输入
+- 支持三种图片尺寸生成：
+  - Small: 768x512
+  - Medium: 768x1024
+  - Large: 1024x1024
+- 优化的生成速度和质量
 
-# 安装所有依赖
-pip install -r requirements.txt
-```
-
-### 2. 配置
-1. 修改 `config.py` 中的数据库连接信息：
-```python
-SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:fuxiao0714.postgresql@localhost:5432/I2T_magic_db'
-```
-
-2. 设置API密钥（如果使用）：
-```python
-OPENAI_API_KEY = "your-api-key"
-```
-
-### 3. 数据库初始化
-```bash
-# 初始化迁移
-flask db init
-
-# 创建迁移脚本
-flask db migrate -m "initial migration"
-
-# 应用迁移
-flask db upgrade
-```
-
-### 4. 运行服务器
-```bash
-python run.py
-```
+### InternVL2模型
+- 支持多语言图片描述生成
+- 强大的图像理解能力
+- 支持中英文输出切换
+- 高质量的描述文本生成
 
 ## API接口说明
 
@@ -218,6 +194,17 @@ python run.py
 - **参数：** 
   - images: 图片文件列表（multipart/form-data）
   - user_id: 用户ID
+- **返回值：**
+  ```json
+  {
+    "status": "success",
+    "message": "上传成功",
+    "data": {
+      "processed_count": 10,
+      "failed_count": 0
+    }
+  }
+  ```
 
 ### 2. 图片搜索
 - **接口：** POST /api/search
@@ -225,7 +212,26 @@ python run.py
   ```json
   {
     "text": "搜索文本",
-    "threshold": 0.5
+    "threshold": 0.5,
+    "page": 1,
+    "page_size": 20
+  }
+  ```
+- **返回值：**
+  ```json
+  {
+    "status": "success",
+    "data": {
+      "images": [
+        {
+          "img_id": "xxx",
+          "image_path": "path/to/image",
+          "similarity": 0.85
+        }
+      ],
+      "total": 100,
+      "page": 1
+    }
   }
   ```
 
@@ -235,7 +241,19 @@ python run.py
   ```json
   {
     "text": "图片描述",
-    "user_id": "用户ID"
+    "user_id": "用户ID",
+    "size": "medium",  // small, medium, large
+    "language": "zh"   // zh, en
+  }
+  ```
+- **返回值：**
+  ```json
+  {
+    "status": "success",
+    "data": {
+      "image_url": "path/to/generated/image",
+      "img_id": "xxx"
+    }
   }
   ```
 
@@ -244,6 +262,17 @@ python run.py
 - **参数：** 
   - image: 图片文件（multipart/form-data）
   - user_id: 用户ID
+  - language: 输出语言 (zh/en)
+- **返回值：**
+  ```json
+  {
+    "status": "success",
+    "data": {
+      "text": "生成的描述文本",
+      "text_id": "xxx"
+    }
+  }
+  ```
 
 ## 开发进展
 
@@ -254,12 +283,19 @@ python run.py
 - [x] 完成API接口开发
 - [x] 完成文生图功能
   - 支持中英文prompt输入
-  - 支持三种图片尺寸选择（Small: 768x512, Medium: 768x1024, Large: 1024x1024）
+  - 支持三种图片尺寸选择
   - 集成FLUX模型进行图片生成
 - [x] 完成图生文功能
   - 支持图片描述生成
   - 集成InternVL2模型进行图片理解
   - 支持中英文输出切换
+
+### 2024-03-22 新增功能
+- [x] 添加API返回值格式规范
+- [x] 增加分页功能
+- [x] 优化模型加载机制
+- [x] 添加语言切换支持
+- [x] 完善错误处理机制
 
 ### 待办事项
 - [ ] 添加用户认证
@@ -269,3 +305,6 @@ python run.py
 - [ ] 添加缓存机制
 - [ ] 完善错误处理
 - [ ] 添加日志系统
+- [ ] 添加模型性能监控
+- [ ] 实现模型结果缓存
+- [ ] 添加图片处理队列

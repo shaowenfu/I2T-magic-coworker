@@ -3,6 +3,7 @@ import 'package:i2t_magic_frontend/pages/InitPictureStorePage/init_picture_store
 import 'package:i2t_magic_frontend/pages/search/search_page.dart';
 import 'package:i2t_magic_frontend/pages/generate/generate_page.dart';
 import 'package:i2t_magic_frontend/pages/text_generate/text_generate_page.dart';
+import 'dart:async';
 
 const Color kPrimaryColor = Color(0xFF456173); // 深蓝灰色
 const Color kAccentColor = Color(0xFF4EBF4B); // 绿色
@@ -10,8 +11,60 @@ const Color kSecondaryColor = Color(0xFFF2B872); // 浅橙色
 const Color kTertiaryColor = Color(0xFFBF895A); // 棕色
 const Color kErrorColor = Color(0xFFA62317); // 红色
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  final PageController _pageController = PageController();
+  Timer? _timer;
+  int _currentPage = 0;
+  final int _totalPages = 3; // 轮播图总页数
+  bool _isAnimating = false; // 添加动画状态标记
+
+  @override
+  void initState() {
+    super.initState();
+    _startAutoScroll();
+  }
+
+  void _startAutoScroll() {
+    _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      if (_pageController.hasClients && !_isAnimating) {
+        _animateToNextPage();
+      }
+    });
+  }
+
+  void _animateToNextPage() {
+    if (_isAnimating) return;
+
+    _isAnimating = true;
+    final nextPage = (_currentPage + 1) % _totalPages;
+
+    _pageController
+        .animateToPage(
+      nextPage,
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeInOut,
+    )
+        .then((_) {
+      _isAnimating = false;
+      setState(() {
+        _currentPage = nextPage;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _pageController.dispose();
+    super.dispose();
+  }
 
   Widget _buildHeader() {
     return Container(
@@ -90,19 +143,27 @@ class HomePage extends StatelessWidget {
     return SizedBox(
       height: 180,
       child: PageView.builder(
-        itemCount: carouselItems.length,
+        controller: _pageController,
+        itemCount: _totalPages,
+        onPageChanged: (int page) {
+          if (!_isAnimating) {
+            setState(() {
+              _currentPage = page;
+            });
+          }
+        },
         itemBuilder: (context, index) {
           return Container(
             margin: const EdgeInsets.symmetric(horizontal: 5.0),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  kPrimaryColor.withOpacity(0.8),
-                  kTertiaryColor.withOpacity(0.8),
-                ],
+              image: DecorationImage(
+                image: AssetImage(carouselItems[index]['image']!),
+                fit: BoxFit.cover,
+                colorFilter: ColorFilter.mode(
+                  Colors.black.withOpacity(0.3),
+                  BlendMode.darken,
+                ),
               ),
               boxShadow: [
                 BoxShadow(
@@ -175,7 +236,7 @@ class HomePage extends StatelessWidget {
       },
       {
         'title': '文案配图',
-        'description': '根据文字描述生成相应的图片',
+        'description': '根据文字描述生成相的图片',
         'icon': Icons.image,
         'gradient': const [Color(0xFFB6D6F2), Color(0xFF8C3718)],
         'page': const GeneratePage(),

@@ -1,6 +1,6 @@
 from app.utils.helpers import get_image_vector, get_text_vector, calculate_similarity
 from app.utils.constants import ImageCategory
-from app import db
+from app.extensions import db
 from app.models.image import Image as ImageModel
 import numpy as np
 import requests

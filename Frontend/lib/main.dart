@@ -3,9 +3,12 @@ import 'constants/app_constants.dart';
 import 'pages/welcome/welcome_page.dart';
 import 'pages/main_navigation.dart';
 import 'common/services_locator.dart';
+import 'services/user_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   setupServices();
+  await UserService().loadUserInfo();
   runApp(const MyApp());
 }
 
@@ -19,10 +22,10 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      initialRoute: AppConstants.welcomeRoute,
+      initialRoute: '/',
       routes: {
-        AppConstants.welcomeRoute: (context) => const WelcomePage(),
-        AppConstants.homeRoute: (context) => const MainNavigation(),
+        '/': (context) => const WelcomePage(),
+        '/home': (context) => const MainNavigation(),
       },
     );
   }

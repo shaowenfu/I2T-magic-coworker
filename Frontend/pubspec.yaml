@@ -103,3 +103,6 @@ flutter:
   assets:
     - assets/images/
     - assets/images/downloads/
+    - assets/images/guide.png
+    - assets/images/search.png
+    - assets/images/generate.png

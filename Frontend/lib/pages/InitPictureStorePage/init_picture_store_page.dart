@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:i2t_magic_frontend/services/oss_service.dart';
+import 'package:i2t_magic_frontend/services/user_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../services/api_service.dart';
-import '../../common/services_locator.dart';
 import 'dart:io';
 
 const Color kPrimaryColor = Color(0xFF456173); // 深蓝灰色
@@ -22,7 +22,7 @@ class InitPictureStorePage extends StatefulWidget {
 class _InitPictureStorePageState extends State<InitPictureStorePage> {
   final ScrollController _imgController = ScrollController();
   List<XFile> images = [];
-  final ApiService _apiService = getIt<ApiService>();
+  final ApiService _apiService = ApiService();
   final ImagePicker _picker = ImagePicker();
   bool _isLoading = false;
   bool _isImagesLoaded = false;
@@ -241,13 +241,16 @@ class _InitPictureStorePageState extends State<InitPictureStorePage> {
 
     try {
       // 从服务器获取图片URL列表
-      final imageList = await _apiService.getUserImages('sherwen'); // 替换实际用户ID
+      debugPrint('开始获取全部图片URL列表');
+      final imageList = await _apiService.getUserImages(); // 不需要传入 userId
+      debugPrint('获取全部图片URL列表成功');
 
       // 清空当前图片列表
       setState(() {
         images.clear();
       });
-
+      debugPrint('清空当前图片列表成功');
+      debugPrint('开始下载并添加每张图片');
       // 下载并添加每张图片
       for (var imageData in imageList) {
         final localPath =
@@ -258,6 +261,7 @@ class _InitPictureStorePageState extends State<InitPictureStorePage> {
           });
         }
       }
+      debugPrint('下载并添加每张图片成功');
 
       // 标记图片已加载
       _isImagesLoaded = true;
@@ -340,6 +344,7 @@ class _InitPictureStorePageState extends State<InitPictureStorePage> {
     }
 
     try {
+      debugPrint('开始上传新选择的图片到OSS');
       setState(() => _isLoading = true);
 
       // 上传新选择的图片到OSS
@@ -351,15 +356,19 @@ class _InitPictureStorePageState extends State<InitPictureStorePage> {
           uploadedUrls.add(url);
         }
       }
+      debugPrint('上传新选择的图片到OSS成功');
+      debugPrint('开始发送URL列表到后端');
 
       // 发送URL列表到后端
-      await _apiService.uploadInitImages(uploadedUrls, 'sherwen');
+      final userId = UserService().userId;
+      if (userId == null) throw Exception('未登录');
+      await _apiService.uploadInitImages(uploadedUrls, userId);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('上传成功')),
         );
-        Navigator.pop(context);
+        Navigator.pushReplacementNamed(context, '/home');
       }
     } catch (e) {
       if (mounted) {

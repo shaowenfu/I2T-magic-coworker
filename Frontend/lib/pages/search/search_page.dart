@@ -31,7 +31,7 @@ class _SearchPageState extends State<SearchPage> {
     });
 
     try {
-      final results = await _apiService.searchImages(query, userId: 'sherwen');
+      final results = await _apiService.searchImages(query);
       setState(() {
         _searchResults = results;
       });
@@ -118,6 +118,22 @@ class _SearchPageState extends State<SearchPage> {
                         style: TextStyle(
                           fontSize: 14,
                           color: kPrimaryColor.withOpacity(0.7),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: kTertiaryColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          '搜索相似图片，智能匹配',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: kTertiaryColor,
+                          ),
                         ),
                       ),
                     ],

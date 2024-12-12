@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/oss_service.dart';
+import '../services/user_service.dart';
 
 class ApiService {
   final http.Client client;
@@ -47,7 +48,10 @@ class ApiService {
 
   // 图片搜索
   Future<List<ImageResult>> searchImages(String searchText,
-      {double threshold = 0.5, String userId = 'sherwen'}) async {
+      {double threshold = 0.5}) async {
+    final userId = UserService().userId;
+    if (userId == null) throw Exception('未登录');
+
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/api/search'),
@@ -100,7 +104,7 @@ class ApiService {
       String selectedStyle) async {
     try {
       const url = '$baseUrl/api/generate/image';
-      debugPrint('正在连接服务器...');
+      debugPrint('正在接服务器...');
       debugPrint('请求URL: $url');
       debugPrint('请求参数: text=$text, userId=$userId');
       debugPrint('请求参数: size=$selectedSize, style=$selectedStyle');
@@ -133,7 +137,7 @@ class ApiService {
       throw Exception('无法连接到服务器，请检查网络连接和服务器状态');
     } on TimeoutException catch (e) {
       debugPrint('请求超时');
-      throw Exception('请超时，请稍后重试');
+      throw Exception('请超时，请稍后重���');
     } catch (e) {
       debugPrint('其他错误: $e');
       throw Exception('生成失败: $e');
@@ -206,12 +210,11 @@ class ApiService {
     );
   }
 
-  Future<List<Map<String, dynamic>>> getUserImages(String userId) async {
-    try {
-      // final prefs = await SharedPreferences.getInstance();
-      // final token = prefs.getString("token");
-      // if (token == null) throw Exception('未登录');
+  Future<List<Map<String, dynamic>>> getUserImages() async {
+    final userId = UserService().userId;
+    if (userId == null) throw Exception('未登录');
 
+    try {
       debugPrint('获取图片列表');
       final response = await http.get(
         Uri.parse('$baseUrl/api/user/images/$userId'),
@@ -235,6 +238,52 @@ class ApiService {
     } catch (e) {
       debugPrint('获取图片列表失败: $e');
       throw Exception('获取图片列表失败: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>?> login(String username, String password) async {
+    debugPrint('发送登录请求');
+    debugPrint('用户名: $username');
+    debugPrint('密码: $password');
+    const url = '$baseUrl/api/auth/login';
+    try {
+      debugPrint('发送请求：$url');
+      final response = await _dio.post(url, data: {
+        'username': username,
+        'password': password,
+      });
+
+      if (response.data != null) {
+        // 保存用户信息
+        await UserService().saveUserInfo(
+          userId: username, // 或者使用服务器返回的user_id
+          token: response.data['token'], // 如果服务器返回token
+        );
+      }
+
+      return response.data;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>?> register(
+      String username, String password) async {
+    debugPrint('发送注册请求');
+    debugPrint('用户名: $username');
+    debugPrint('密码: $password');
+    const url = '$baseUrl/api/auth/register';
+    try {
+      debugPrint('发送请求：$url');
+      debugPrint('请求数据：$username, $password');
+      final response = await _dio.post(url, data: {
+        'username': username,
+        'password': password,
+      });
+      return response.data;
+    } catch (e) {
+      debugPrint('注册失败: $e');
+      rethrow;
     }
   }
 }

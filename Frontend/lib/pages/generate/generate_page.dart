@@ -58,7 +58,7 @@ class _GeneratePageState extends State<GeneratePage> {
         setState(() {
           _generatedImagePath = localPath;
         });
-        debugPrint('图片下载��功，本地路径: $_generatedImagePath');
+        debugPrint('图片下载成功，本地路径: $_generatedImagePath');
       } else {
         throw Exception('图片下载失败');
       }
@@ -131,6 +131,22 @@ class _GeneratePageState extends State<GeneratePage> {
                           style: TextStyle(
                             fontSize: 14,
                             color: kPrimaryColor.withOpacity(0.7),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: kSecondaryColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            '输入文字，AI智能生成图片',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: kSecondaryColor,
+                            ),
                           ),
                         ),
                       ],

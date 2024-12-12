@@ -19,7 +19,7 @@ class TextGeneratePage extends StatefulWidget {
 }
 
 class _TextGeneratePageState extends State<TextGeneratePage> {
-  bool _isLoading = false;
+  final Map<int, bool> _cardLoadingStates = {};
   final List<Map<String, String>> _imageCards = [];
   final ApiService _apiService = ApiService();
   final ImagePicker _picker = ImagePicker();
@@ -36,23 +36,27 @@ class _TextGeneratePageState extends State<TextGeneratePage> {
     try {
       final int cardIndex = _imageCards.length;
       setState(() {
-        _imageCards.add({
+        _imageCards.insert(0, {
           'imagePath': image.path,
-          'description': '正在上传图片...',
+          'description': '正在生成描述...',
         });
+        _cardLoadingStates[0] = true;
       });
-      const String? ossUrl =
-          "https://i2t-magic-coworker.oss-cn-chengdu.aliyuncs.com/folder/20241210/pOTYMpALUBso.jpg";
-      // final String? ossUrl = await _fileManager.uploadFile(_imageFile!);
+
+      final String? ossUrl = await _fileManager.uploadFile(_imageFile!);
       debugPrint('OSS URL: $ossUrl');
       if (ossUrl == null) {
         throw Exception('上传到OSS失败');
       }
       _imagePath = ossUrl;
 
-      await _generateDescription(cardIndex);
+      await _generateDescription(0);
     } catch (e) {
       debugPrint('处理失败: ${e.toString()}');
+      setState(() {
+        _imageCards[0]['description'] = '处理失败: ${e.toString()}';
+        _cardLoadingStates[0] = false;
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('处理失败: ${e.toString()}')),
       );
@@ -60,29 +64,23 @@ class _TextGeneratePageState extends State<TextGeneratePage> {
   }
 
   Future<void> _generateDescription(int index) async {
-    setState(() {
-      _isLoading = true;
-    });
-
     try {
-      debugPrint('开始生成描述');
       final description = await _apiService.generateText(
         _imagePath!,
         'user_123',
       );
-      debugPrint('生成描述成功: $description');
       setState(() {
         _imageCards[index]['description'] = description;
+        _cardLoadingStates[index] = false;
       });
     } catch (e) {
-      debugPrint('生成描述失败: ${e.toString()}');
+      setState(() {
+        _imageCards[index]['description'] = '生成描述失败';
+        _cardLoadingStates[index] = false;
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('生成失败: ${e.toString()}')),
       );
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
     }
   }
 
@@ -230,14 +228,18 @@ class _TextGeneratePageState extends State<TextGeneratePage> {
                   ),
                 ],
               ),
-              child: Text(
-                card['description']!,
-                style: TextStyle(
-                  fontSize: 16,
-                  height: 1.5,
-                  color: kPrimaryColor.withOpacity(0.8),
-                ),
-              ),
+              child: _cardLoadingStates[index] == true
+                  ? const Center(
+                      child: CircularProgressIndicator(),
+                    )
+                  : Text(
+                      card['description']!,
+                      style: TextStyle(
+                        fontSize: 16,
+                        height: 1.5,
+                        color: kPrimaryColor.withOpacity(0.8),
+                      ),
+                    ),
             ),
           ],
         ),
@@ -298,6 +300,22 @@ class _TextGeneratePageState extends State<TextGeneratePage> {
                           color: kPrimaryColor.withOpacity(0.7),
                         ),
                       ),
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: kAccentColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          '上传图片，智能生成文字描述',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: kAccentColor,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -337,19 +355,17 @@ class _TextGeneratePageState extends State<TextGeneratePage> {
 
             // 图片卡片网格
             Expanded(
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: _imageCards.length,
-                      itemBuilder: (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: _buildImageCard(_imageCards[index], index),
-                        );
-                      },
-                    ),
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                physics: const BouncingScrollPhysics(),
+                itemCount: _imageCards.length,
+                itemBuilder: (context, index) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: _buildImageCard(_imageCards[index], index),
+                  );
+                },
+              ),
             ),
           ],
         ),

@@ -17,18 +17,20 @@ class FileManager {
   // 工厂构造函数
   factory FileManager() => instance;
 
-  static String ossAccessKeyId = 'LTAI5tGBrvpuC9e6AMtBdjrD';
-
-  static String ossAccessKeySecret = 'WSItd9pqgxodvFsd6MIRxd9pVUWfsP';
-
-  // oss设置的bucket的名字
-  static String bucket = 'i2t-magic-coworker';
-
-  // 发送请求的url,根据你自己设置的是哪个城市的
-  static String url = 'https://$bucket.oss-cn-chengdu.aliyuncs.com';
+  // 从环境变量或配置文件中读取
+  static const String bucket = String.fromEnvironment('OSS_BUCKET');
+  static const String url = String.fromEnvironment('OSS_URL');
+  static const String ossAccessKeyId =
+      String.fromEnvironment('OSS_ACCESS_KEY_ID');
+  static const String ossAccessKeySecret =
+      String.fromEnvironment('OSS_ACCESS_KEY_SECRET');
 
   // 过期时间
-  static String expiration = '2025-01-01T12:00:00.000Z';
+  static String expiration = DateTime.now()
+      .add(const Duration(hours: 1))
+      .toUtc()
+      .toString()
+      .replaceAll(' ', 'T');
 
   Future<String?> uploadFile(
     File file,

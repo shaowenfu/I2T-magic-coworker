@@ -15,12 +15,13 @@ text_to_image_bp = Blueprint('text_to_image', __name__)
 
 # 添加 OSS 配置
 def get_oss_bucket():
-    access_key_id = 'LTAI5tGBrvpuC9e6AMtBdjrD'  # 替换为你的 AccessKeyId
-    access_key_secret = 'WSItd9pqgxodvFsd6MIRxd9pVUWfsP'  # 替换为你的 AccessKeySecret
+    # 从环境变量或配置文件获取密钥
+    access_key_id = os.getenv('OSS_ACCESS_KEY_ID')  # 替换为环境变量
+    access_key_secret = os.getenv('OSS_ACCESS_KEY_SECRET')  # 替换为环境变量
     
     auth = oss2.Auth(access_key_id, access_key_secret)
-    endpoint = 'https://oss-cn-chengdu.aliyuncs.com'  # 使用标准的区域 endpoint
-    bucket_name = 'i2t-magic-coworker'
+    endpoint = os.getenv('OSS_ENDPOINT', 'https://oss-cn-chengdu.aliyuncs.com')
+    bucket_name = os.getenv('OSS_BUCKET_NAME', 'i2t-magic-coworker')
     return oss2.Bucket(auth, endpoint, bucket_name)
 
 @text_to_image_bp.route('/api/generate/image', methods=['POST'])

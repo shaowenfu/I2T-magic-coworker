@@ -151,8 +151,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - FLUX model team
 - InternVL2 model team
+- [@jiangziyi12](https://github.com/jiangziyi12)
+- [@qqmmyy](https://github.com/qqmmyy)
+- [@yoceany](https://github.com/yoceany)
 - All contributors
-
 ---
 
 <div align="center">

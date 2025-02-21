@@ -151,8 +151,10 @@ flutter run
 
 - FLUX 模型团队
 - InternVL2 模型团队
+- [@jiangziyi12](https://github.com/jiangziyi12)
+- [@qqmmyy](https://github.com/qqmmyy)
+- [@yoceany](https://github.com/yoceany)
 - 所有贡献者
-
 ---
 
 <div align="center">

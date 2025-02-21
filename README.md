@@ -12,6 +12,10 @@
 
 AI-powered Image & Text Assistant - Create, Search, and Transform with Intelligence
 
+📚 **Detailed Documentation**: 
+- [Backend Documentation (English)](Backend/README_backend.md) | [后端文档](Backend/README_backend_zh.md)
+- [Frontend Documentation (English)](Frontend/README_frontend.md) | [前端文档](Frontend/README_frontend_zh.md)
+
 ![App Preview](Frontend/image-1.png)
 
 </div>

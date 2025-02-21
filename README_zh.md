@@ -12,6 +12,10 @@
 
 AI驱动的图文助手 - 智能创作、搜索与转换
 
+📚 **详细文档**：
+- [Backend Documentation (English)](Backend/README_backend.md) | [后端文档](Backend/README_backend_zh.md)
+- [Frontend Documentation (English)](Frontend/README_frontend.md) | [前端文档](Frontend/README_frontend_zh.md)
+
 ![应用预览](Frontend/image-1.png)
 
 </div>
